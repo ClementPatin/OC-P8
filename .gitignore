@@ -3,11 +3,6 @@ __pycache__/
 P8_Cityscapes_gtFine_trainvaltest/
 P8_Cityscapes_leftImg8bit_trainvaltest/
 ressources P8/
-mlruns/.trash/
-mlruns/0/
-mlruns/931894627455945656/096dd85e24ba4bcc9970625aaf8247a6/artifacts/model/
-pretrained_embeddings/
-mySaves/advanced_model_large/
+mySaves/models/
 Patin_Clement_5_presentation_042024.pptx
-Patin_Clement_1_modele_012024/__pycache__/
-Detectez_bad_buzz_deep_learning_patin_clement.zip
+photo-prise-de-l-interieur-de-la-voiture-a-la-route-2e3kacw.jpg
