@@ -152,8 +152,8 @@ def testAlbu(gen, trans, idx, trans_name = "") :
 
 
     # get image and its mask from "gen"
-    image = gen[0][0][idx]
-    mask = gen[0][1][idx]
+    image = gen[0][0][idx].astype("uint8")
+    mask = gen[0][1][idx].astype("uint8")
 
     # create compose object from "trans" and use it on image and mask
     aug = A.Compose(trans)
