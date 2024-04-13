@@ -22,12 +22,13 @@ class generator(keras.utils.Sequence) :
         - reads images 
     '''
 
-    def __init__(self, batch_size, images_path, masks_path, image_size, which_set, cats=None, augmentation=None, backbone=None, shuffle=False, split=False, split_test_size = 0.1, split_keep="split_train", split_rs=16) :
+    def __init__(self, batch_size, images_path, masks_path, image_size, which_set, n_images=None, cats=None, augmentation=None, backbone=None, shuffle=False, split=False, split_test_size = 0.1, split_keep="split_train", split_rs=16) :
         self.batch_size = batch_size
         self.images_path = images_path
         self.masks_path = masks_path
         self.image_size = image_size
         self.which_set = which_set
+        self.n_images = n_images
         self.cats = cats
         self.augmentation = augmentation
         self.backbone = backbone
@@ -60,6 +61,11 @@ class generator(keras.utils.Sequence) :
             ])
             # sort
             l.sort()
+
+        # handle n_images
+        if n_images :
+            self.images_path_list = self.images_path_list[:n_images]
+            self.masks_path_list = self.masks_path_list[:n_images]
         
         # handle split if neccessary
         if split :
@@ -130,7 +136,56 @@ class generator(keras.utils.Sequence) :
         if self.shuffle :
             self.indexes = np.random.permutation(self.indexes)
 
-        
+
+
+
+
+def baseline_model(input_shape, num_classes):
+
+
+
+    layers = [
+        keras.Input(shape=input_shape),
+        keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+        keras.layers.Conv2D(filters=128, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.Conv2D(filters=128, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+        keras.layers.Conv2D(filters=256, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.Conv2D(filters=256, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.UpSampling2D(size=(2,2)),
+        keras.layers.Conv2D(filters=128, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.Conv2D(filters=128, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.UpSampling2D(size=(2,2)),
+        keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding="same", activation="relu"),
+        keras.layers.Conv2D(filters=num_classes, kernel_size=3, strides=1, padding="same", activation="softmax"),       
+    ]
+
+    # inputs = keras.Input(shape=input_shape)
+
+    # x = layers.Conv2D(64, 3, strides=2, activation="relu", padding="same")(inputs)
+    # x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
+    # x = layers.Conv2D(128, 3, strides=2, activation="relu", padding="same")(x)
+    # x = layers.Conv2D(128, 3, activation="relu", padding="same")(x)
+    # x = layers.Conv2D(256, 3, strides=2, padding="same", activation="relu")(x)
+    # x = layers.Conv2D(256, 3, activation="relu", padding="same")(x)
+
+    # x = layers.Conv2DTranspose(256, 3, activation="relu", padding="same")(x)
+    # x = layers.Conv2DTranspose(256, 3, activation="relu", padding="same", strides=2)(x)
+    # x = layers.Conv2DTranspose(128, 3, activation="relu", padding="same")(x)
+    # x = layers.Conv2DTranspose(128, 3, activation="relu", padding="same", strides=2)(x)
+    # x = layers.Conv2DTranspose(64, 3, activation="relu", padding="same")(x)
+    # x = layers.Conv2DTranspose(64, 3, activation="relu", padding="same", strides=2)(x)
+
+    # outputs = layers.Conv2D(num_classes, 3, activation="softmax", padding="same")(x)
+
+    # model = Model(inputs, outputs)
+
+    return keras.models.Sequential(layers, name="baseline_model")
+
+
 
 
 
@@ -175,3 +230,53 @@ def testAlbu(gen, trans, idx, trans_name = "") :
 
     # main title
     fig.suptitle("Image augmentation test : "+trans_name)
+
+
+
+
+
+def testModel(model, test_gen, n_images, random_state=16) :
+    '''
+    test a segmentation model. Display the image, the mask and the predicted mask
+
+    parameters :
+    ------------
+    model - segmentation model
+    test_gen - generator custom class instance
+    n_images - int
+    random_state - int : random seed. By default : 16
+    '''
+
+    # imports 
+    import matplotlib.pyplot as plt
+    import numpy as np
+    # random seed
+    np.random.seed(seed=random_state)
+
+    # pick one batch
+    some_batch_index = np.random.choice(np.arange(len(test_gen)), size = 1)[0]
+    some_batch = test_gen[some_batch_index]
+    # pick n_images idx from this batch
+    some_batch_examples_idx = np.random.choice(np.arange(len(some_batch[0])), size = n_images)
+    some_images = np.array([some_batch[0][i] for i in some_batch_examples_idx])
+    some_masks = np.array([some_batch[1][i] for i in some_batch_examples_idx])
+
+    # get class label for each pixel then put them in a channel
+    some_masks = np.expand_dims(np.argmax(some_masks, axis=3), axis=3)
+
+
+    preds = model.predict(some_images)
+    preds = np.expand_dims(np.argmax(preds, axis=3), axis=3)
+
+    # create figure
+    fig, axs = plt.subplots(n_images,3,figsize=(14,7*n_images/3))
+
+    # imshow and titles
+    for i in range(n_images) :
+        for j, images_array in enumerate([some_images, some_masks, preds]) :
+            axs[i,j].imshow(images_array[i])
+
+            axs[i,j].set_axis_off()
+        # axs[i].set_title(title)
+
+    # main title
