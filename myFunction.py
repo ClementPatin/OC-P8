@@ -163,25 +163,7 @@ def baseline_model(input_shape, num_classes):
         keras.layers.Conv2D(filters=num_classes, kernel_size=3, strides=1, padding="same", activation="softmax"),       
     ]
 
-    # inputs = keras.Input(shape=input_shape)
 
-    # x = layers.Conv2D(64, 3, strides=2, activation="relu", padding="same")(inputs)
-    # x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
-    # x = layers.Conv2D(128, 3, strides=2, activation="relu", padding="same")(x)
-    # x = layers.Conv2D(128, 3, activation="relu", padding="same")(x)
-    # x = layers.Conv2D(256, 3, strides=2, padding="same", activation="relu")(x)
-    # x = layers.Conv2D(256, 3, activation="relu", padding="same")(x)
-
-    # x = layers.Conv2DTranspose(256, 3, activation="relu", padding="same")(x)
-    # x = layers.Conv2DTranspose(256, 3, activation="relu", padding="same", strides=2)(x)
-    # x = layers.Conv2DTranspose(128, 3, activation="relu", padding="same")(x)
-    # x = layers.Conv2DTranspose(128, 3, activation="relu", padding="same", strides=2)(x)
-    # x = layers.Conv2DTranspose(64, 3, activation="relu", padding="same")(x)
-    # x = layers.Conv2DTranspose(64, 3, activation="relu", padding="same", strides=2)(x)
-
-    # outputs = layers.Conv2D(num_classes, 3, activation="softmax", padding="same")(x)
-
-    # model = Model(inputs, outputs)
 
     return keras.models.Sequential(layers, name="baseline_model")
 
@@ -189,7 +171,7 @@ def baseline_model(input_shape, num_classes):
 
 
 
-def testAlbu(gen, trans, idx, trans_name = "") :
+def testAlbu(gen, trans, idx, cats_colors, trans_name = "") :
     '''
     test augmentation using Albumentation and plot the result for an image and its mask
 
@@ -215,8 +197,8 @@ def testAlbu(gen, trans, idx, trans_name = "") :
     sample = aug(image=image, mask=mask)
     image_aug = sample["image"]
     # for mask, get each pixel label using "argmax" and put it in a channel using "expand_dim"
-    mask = np.expand_dims(np.argmax(mask, axis=2), axis=2)
-    mask_aug = np.expand_dims(np.argmax(sample["mask"], axis=2), axis=2)
+    mask = cats_colors[np.argmax(mask, axis=2)]
+    mask_aug = cats_colors[np.argmax(sample["mask"], axis=2)]
 
     # create figure
     fig, axs = plt.subplots(2,2,figsize=(14,7))
@@ -235,7 +217,7 @@ def testAlbu(gen, trans, idx, trans_name = "") :
 
 
 
-def testModel(model, test_gen, n_images, random_state=16) :
+def testModel(model, test_gen, n_images, cats_colors, random_state=16) :
     '''
     test a segmentation model. Display the image, the mask and the predicted mask
 
@@ -254,7 +236,7 @@ def testModel(model, test_gen, n_images, random_state=16) :
     np.random.seed(seed=random_state)
 
     # pick one batch
-    some_batch_index = np.random.choice(np.arange(len(test_gen)), size = 1)[0]
+    some_batch_index = np.random.choice(np.arange(max(1,len(test_gen))), size = 1)[0]
     some_batch = test_gen[some_batch_index]
     # pick n_images idx from this batch
     some_batch_examples_idx = np.random.choice(np.arange(len(some_batch[0])), size = n_images)
@@ -262,11 +244,11 @@ def testModel(model, test_gen, n_images, random_state=16) :
     some_masks = np.array([some_batch[1][i] for i in some_batch_examples_idx])
 
     # get class label for each pixel then put them in a channel
-    some_masks = np.expand_dims(np.argmax(some_masks, axis=3), axis=3)
+    some_masks = cats_colors[np.argmax(some_masks, axis=-1)]
 
 
     preds = model.predict(some_images)
-    preds = np.expand_dims(np.argmax(preds, axis=3), axis=3)
+    preds = cats_colors[np.argmax(preds, axis=-1)]
 
     # create figure
     fig, axs = plt.subplots(n_images,3,figsize=(14,7*n_images/3))

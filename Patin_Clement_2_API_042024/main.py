@@ -3,7 +3,6 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, File, UploadFile
 import tensorflow as tf
 import keras
-import myFunctionsForApp as mf
 import json
 import numpy as np
 
@@ -16,7 +15,7 @@ app = FastAPI()
 # create index
 @app.get('/')
 def index() :
-    return {"message" : "welcome to the Future Vision Transport API - TEST CI/CD"}
+    return {"message" : "welcome to the Future Vision Transport API"}
 
 # load model interpreter form TfLite folder
 interpreter_loaded = tf.lite.Interpreter(model_path="TfLite/resnet34_prod.tflite")
@@ -35,8 +34,6 @@ async def predict_mask(img : UploadFile = File(...)) :
     image = tf.io.decode_image(image_bytes)
 
     image = keras.preprocessing.image.img_to_array(image)
-
-    # image = sm.get_preprocessing(backbone_name)(image)
 
     image = tf.image.resize(image, size=(256, 2*256))
     image = tf.expand_dims(image, axis=0)
@@ -62,9 +59,22 @@ async def predict_mask(img : UploadFile = File(...)) :
     predicted_scores = interpreter_loaded.get_tensor(output_details[0]['index'])[0]
 
     # pick the predicted class and create a channel
-    predicted_mask = np.expand_dims(np.argmax(predicted_scores, axis=-1), axis=-1)
+    predicted_mask = np.argmax(predicted_scores, axis=-1)
 
-    return {"mask" : json.dumps(predicted_mask.tolist())}
+    color_map = np.array([
+        [  0,   0,   0],
+        [128,  64, 128],
+        [ 70,  70,  70],
+        [153, 153, 153],
+        [107, 142,  35],
+        [ 70, 130, 180],
+        [220,  20,  60],
+        [  0,   0, 142]
+        ])
+    
+    predicted_mask_colored = color_map[predicted_mask]
+
+    return {"mask" : json.dumps(predicted_mask_colored.tolist())}
 
 
 
@@ -72,7 +82,7 @@ async def predict_mask(img : UploadFile = File(...)) :
 
 
 
-if __name__ == '__main__' :
-    uvicorn.run(app, host="127.0.0.1", port = 8000)
+# if __name__ == '__main__' :
+#     uvicorn.run(app, host="127.0.0.1", port = 8000)
 
 # uvicorn main:app --reload

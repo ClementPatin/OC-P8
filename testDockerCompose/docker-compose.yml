@@ -1,0 +1,60 @@
+version: '3'
+name: oc-p8
+services:
+  frontend:
+    build: Patin_Clement_3_application_Flask_042024
+    image: clementpatin/oc-p8:frontend
+    ports:
+      - 8501:8501
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - app
+    container_name: frontend
+    
+  backend:
+    build: Patin_Clement_2_API_042024
+    image: clementpatin/oc-p8:backend
+    ports:
+      - 8000:8000
+    restart: always
+    networks:
+      - app
+    container_name: backend
+
+networks:
+  app:
+    driver: bridge
+
+
+# local :
+
+# docker login
+# docker-compose up --build -d (pour le créer et le lancer en local)
+# docker-compose up -d (tjs en local, pour le lancer seulement, l'image étant déjà créée)
+
+# push vers docker hub
+# docker-compose push
+
+# docker-compose push (pour l'enregistrer sur le repo Docker Hub ou ACR)
+
+
+
+# déploiement Azure Web App :
+
+# créer un resource group
+# az group create --name oc-p7 --location "West Europe"
+# créer un appservice plan (en B2 car sinon ça foire)
+# az appservice plan create --name appServiceP7 --resource-group oc-p7 --sku B2 --is-linux  
+# créer l'app grâce au docker-compose    
+# az webapp create --resource-group oc-p7 --name testAppP7 --multicontainer-config-type compose --multicontainer-config-file docker-compose.yml --plan appServiceP7
+
+
+# pour le CI/CD :
+# ..... 
+
+
+# tout effacer :
+
+# az group delete --name oc-p7

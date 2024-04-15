@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FVT - Image segmentation</title>
+    <link href="{{ url_for('static', filename='css/mygrid.css') }}" rel="stylesheet">
+</head>
+<body>
+    <h1>Future Vision Transport</h1>
+    <h1>Testing the image segmentation API</h1>
+    <h2>Select an image :</h2>
+    {% for image in images_names %}
+        <button type="button" onclick="window.location.href='{{ url_for( 'predict', image_name=image) }}';">Image {{ loop.index }}</button>
+    {% endfor %}
+    <br><br>
+
+
+    <div class="parent-grille">
+        <div class="zone1">
+            <p>Image {{image_name}} :</p>
+            <img src="{{ image_path }}" alt="Selected Image">
+        </div>
+        <div class="zone2">
+            <p>True mask :</p>
+            <img src="{{ mask_path }}" alt="Selected Mask">
+        </div>
+        <div class="zone3">
+            <p>Predicted mask :</p>
+            <img src="{{ predicted_mask_path }}" alt="Predicted Mask">
+        </div>
+    </div>
+
+
+</body>
+</html>
