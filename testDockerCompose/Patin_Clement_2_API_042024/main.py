@@ -3,6 +3,13 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, File, UploadFile
 import tensorflow as tf
 import keras
+
+import os
+os.environ["SM_FRAMEWORK"] = 'tf.keras'
+
+import segmentation_models as sm
+
+
 import json
 import numpy as np
 
@@ -36,6 +43,11 @@ async def predict_mask(img : UploadFile = File(...)) :
     image = keras.preprocessing.image.img_to_array(image)
 
     image = tf.image.resize(image, size=(256, 2*256))
+    
+    # preprocess image
+    image = sm.get_preprocessing("resnet34")(image)
+
+    # put image in a tensor (for inference compatibility)
     image = tf.expand_dims(image, axis=0)
 
     # cast to float32 (default tflite dtype)

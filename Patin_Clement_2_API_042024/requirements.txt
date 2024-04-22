@@ -4,3 +4,4 @@ numpy==1.26.4
 tensorflow==2.15.0
 uvicorn==0.29.0
 python-multipart==0.0.9
+segmentation_models==1.0.1
