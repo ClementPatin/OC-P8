@@ -333,7 +333,7 @@ def testAlbu(gen, trans, idx, cats_colors, trans_name = "") :
 
 
 
-def testModel(model, test_gen, n_images, cats_colors, random_state=16) :
+def testModel(model, test_gen, n_images, cats_colors, random_state=16, save_path=None) :
     '''
     test a segmentation model. Display the image, the mask and the predicted mask
 
@@ -343,6 +343,7 @@ def testModel(model, test_gen, n_images, cats_colors, random_state=16) :
     test_gen - generator custom class instance
     n_images - int
     random_state - int : random seed. By default : 16
+    save_path - string : to save figure. By default, None
     '''
 
     # imports 
@@ -380,3 +381,5 @@ def testModel(model, test_gen, n_images, cats_colors, random_state=16) :
     axs[0,1].set_title("Masks")
     axs[0,2].set_title("Predicted masks")
     fig.suptitle("Segmentation model, visualize predictions")
+
+    plt.savefig(save_path, format = "png")
