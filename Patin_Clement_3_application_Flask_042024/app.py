@@ -9,9 +9,7 @@ app = Flask(__name__)
 
 images_names = [str(i+1) for i in range(10)]  # List of image names
 
-# API_URL = "http://localhost:8000"
 API_URL = "https://testapip8.azurewebsites.net"
-
 
 @app.route("/")
 def index():
@@ -24,7 +22,6 @@ def show_image(image_name):
         return "Invalid image name!"
 
     return render_template("result.html", images_names=images_names)
-
 
 @app.route("/predict/<image_name>")
 def predict(image_name):
